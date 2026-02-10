@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GST Reconciliation Tool | ADN & Associates</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0f1c;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.8);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Grid Pattern Overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text span {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 6px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: transparent;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        /* Upload Zone */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.uploaded {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .upload-zone.uploaded .upload-icon {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .upload-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .upload-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .upload-formats {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-info {
+            display: none;
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .upload-zone.uploaded .file-info {
+            display: block;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .stat-card.matched::before { background: var(--success); }
+        .stat-card.mismatch::before { background: var(--warning); }
+        .stat-card.missing-gstr::before { background: var(--danger); }
+        .stat-card.missing-books::before { background: var(--info); }
+        .stat-card.total::before { background: var(--accent-primary); }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-card.matched .stat-value { color: var(--success); }
+        .stat-card.mismatch .stat-value { color: var(--warning); }
+        .stat-card.missing-gstr .stat-value { color: var(--danger); }
+        .stat-card.missing-books .stat-value { color: var(--info); }
+        .stat-card.total .stat-value { color: var(--accent-primary); }
+
+        .stat-amount {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ITC Impact Card */
+        .itc-impact {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.1));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .itc-impact-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .itc-impact-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(239, 68, 68, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .itc-impact-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--danger);
+        }
+
+        .itc-impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .itc-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .itc-item-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .itc-item-value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--danger);
+        }
+
+        .itc-item-value.positive {
+            color: var(--success);
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-matched {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .badge-mismatch {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .badge-missing-gstr {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .badge-missing-books {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--info);
+        }
+
+        /* Difference Display */
+        .diff-positive {
+            color: var(--success);
+        }
+
+        .diff-negative {
+            color: var(--danger);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        select, input[type="text"], input[type="number"] {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Tolerance Settings */
+        .tolerance-settings {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 16px;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tolerance-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tolerance-input label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .tolerance-input input {
+            width: 80px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        /* Column Mapping Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .mapping-section h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--accent-primary);
+        }
+
+        .mapping-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .mapping-row label {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .mapping-row select {
+            flex: 1.5;
+        }
+
+        /* Download Section */
+        .download-section {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .mapping-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Print Styles */
+        @media print {
+            body::before, body::after { display: none; }
+            .header-actions, .upload-grid, .tabs, .filter-bar { display: none; }
+            .card { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">GST</div>
+                <div class="logo-text">
+                    <h1>GST Reconciliation Tool</h1>
+                    <span>GSTR-2A/2B vs Purchase Register Matching</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="resetAll()">
+                    🔄 Reset All
+                </button>
+                <button class="btn btn-primary" onclick="runReconciliation()" id="reconcileBtn" disabled>
+                    ⚡ Run Reconciliation
+                </button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('upload')">📁 Upload Data</button>
+            <button class="tab" onclick="switchTab('results')">📊 Reconciliation Results</button>
+            <button class="tab" onclick="switchTab('analysis')">📈 ITC Analysis</button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">📤</span>
+                        Upload Source Files
+                    </div>
+                </div>
+                <div class="upload-grid">
+                    <!-- GSTR-2A/2B Upload -->
+                    <div class="upload-zone" id="gstr-zone">
+                        <div class="upload-icon">📑</div>
+                        <div class="upload-title">GSTR-2A / 2B Data</div>
+                        <div class="upload-subtitle">Auto-populated GST portal data</div>
+                        <div class="upload-formats">.xlsx, .xls, .csv</div>
+                        <input type="file" id="gstr-file" accept=".xlsx,.xls,.csv" onchange="handleFileUpload('gstr', this)">
+                        <div class="file-info" id="gstr-file-info"></div>
+                    </div>
+
+                    <!-- Purchase Register Upload -->
+                    <div class="upload-zone" id="books-zone">
+                        <div class="upload-icon">📒</div>
+                        <div class="upload-title">Purchase Register</div>
+                        <div class="upload-subtitle">Books of accounts data</div>
+                        <div class="upload-formats">.xlsx, .xls, .csv</div>
+                        <input type="file" id="books-file" accept=".xlsx,.xls,.csv" onchange="handleFileUpload('books', this)">
+                        <div class="file-info" id="books-file-info"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tolerance Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">⚙️</span>
+                        Matching Parameters
+                    </div>
+                </div>
+                <div class="tolerance-settings">
+                    <div class="tolerance-input">
+                        <label>Amount Tolerance (₹):</label>
+                        <input type="number" id="amountTolerance" value="1" min="0" step="0.01">
+                    </div>
+                    <div class="tolerance-input">
+                        <label>Tax Tolerance (₹):</label>
+                        <input type="number" id="taxTolerance" value="1" min="0" step="0.01">
+                    </div>
+                    <div class="tolerance-input">
+                        <label>Date Tolerance (Days):</label>
+                        <input type="number" id="dateTolerance" value="30" min="0">
+                    </div>
+                    <div class="tolerance-input">
+                        <label>Match By:</label>
+                        <select id="matchBy">
+                            <option value="invoice">Invoice Number</option>
+                            <option value="gstin-invoice">GSTIN + Invoice</option>
+                            <option value="gstin-amount">GSTIN + Amount</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results-tab" class="tab-content">
+            <!-- Summary Stats -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-label">Total Records</div>
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-amount" id="stat-total-amt">₹0.00</div>
+                </div>
+                <div class="stat-card matched">
+                    <div class="stat-label">Matched</div>
+                    <div class="stat-value" id="stat-matched">0</div>
+                    <div class="stat-amount" id="stat-matched-amt">₹0.00</div>
+                </div>
+                <div class="stat-card mismatch">
+                    <div class="stat-label">Amount Mismatch</div>
+                    <div class="stat-value" id="stat-mismatch">0</div>
+                    <div class="stat-amount" id="stat-mismatch-amt">₹0.00</div>
+                </div>
+                <div class="stat-card missing-gstr">
+                    <div class="stat-label">Missing in GSTR</div>
+                    <div class="stat-value" id="stat-missing-gstr">0</div>
+                    <div class="stat-amount" id="stat-missing-gstr-amt">₹0.00</div>
+                </div>
+                <div class="stat-card missing-books">
+                    <div class="stat-label">Missing in Books</div>
+                    <div class="stat-value" id="stat-missing-books">0</div>
+                    <div class="stat-amount" id="stat-missing-books-amt">₹0.00</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <span class="filter-label">Status:</span>
+                    <select id="filter-status" onchange="applyFilters()">
+                        <option value="all">All Records</option>
+                        <option value="matched">Matched</option>
+                        <option value="mismatch">Amount Mismatch</option>
+                        <option value="missing-gstr">Missing in GSTR</option>
+                        <option value="missing-books">Missing in Books</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">GSTIN:</span>
+                    <input type="text" id="filter-gstin" placeholder="Filter by GSTIN..." onkeyup="applyFilters()">
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Invoice:</span>
+                    <input type="text" id="filter-invoice" placeholder="Filter by Invoice..." onkeyup="applyFilters()">
+                </div>
+                <div class="download-section">
+                    <button class="btn btn-success" onclick="downloadExcel('all')">📥 Download All</button>
+                    <button class="btn btn-danger" onclick="downloadExcel('mismatches')">📥 Mismatches Only</button>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="card">
+                <div class="table-container" id="results-table-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-title">No Reconciliation Data</div>
+                        <p>Upload both files and run reconciliation to see results</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Tab -->
+        <div id="analysis-tab" class="tab-content">
+            <!-- ITC Impact Summary -->
+            <div class="itc-impact" id="itc-impact">
+                <div class="itc-impact-header">
+                    <div class="itc-impact-icon">⚠️</div>
+                    <div class="itc-impact-title">ITC at Risk - Action Required</div>
+                </div>
+                <div class="itc-impact-grid">
+                    <div class="itc-item">
+                        <div class="itc-item-label">IGST at Risk</div>
+                        <div class="itc-item-value" id="itc-igst">₹0.00</div>
+                    </div>
+                    <div class="itc-item">
+                        <div class="itc-item-label">CGST at Risk</div>
+                        <div class="itc-item-value" id="itc-cgst">₹0.00</div>
+                    </div>
+                    <div class="itc-item">
+                        <div class="itc-item-label">SGST at Risk</div>
+                        <div class="itc-item-value" id="itc-sgst">₹0.00</div>
+                    </div>
+                    <div class="itc-item">
+                        <div class="itc-item-label">Total ITC at Risk</div>
+                        <div class="itc-item-value" id="itc-total">₹0.00</div>
+                    </div>
+                    <div class="itc-item">
+                        <div class="itc-item-label">Excess ITC in GSTR</div>
+                        <div class="itc-item-value positive" id="itc-excess">₹0.00</div>
+                    </div>
+                    <div class="itc-item">
+                        <div class="itc-item-label">Net ITC Variance</div>
+                        <div class="itc-item-value" id="itc-net">₹0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vendor-wise Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🏢</span>
+                        Vendor-wise ITC Analysis
+                    </div>
+                    <button class="btn btn-secondary" onclick="downloadVendorAnalysis()">📥 Download</button>
+                </div>
+                <div class="table-container" id="vendor-table-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏢</div>
+                        <div class="empty-state-title">No Vendor Data</div>
+                        <p>Run reconciliation to see vendor-wise analysis</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Month-wise Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">📅</span>
+                        Month-wise ITC Variance
+                    </div>
+                </div>
+                <div class="table-container" id="month-table-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <div class="empty-state-title">No Monthly Data</div>
+                        <p>Run reconciliation to see month-wise analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Mapping Modal -->
+    <div class="modal-overlay" id="mapping-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">📋 Map Columns</div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">
+                    Map your file columns to the required fields. Select the matching column for each field.
+                </p>
+                <div class="mapping-grid">
+                    <div class="mapping-section" id="gstr-mapping">
+                        <h4>GSTR-2A/2B Columns</h4>
+                        <!-- Dynamic content -->
+                    </div>
+                    <div class="mapping-section" id="books-mapping">
+                        <h4>Purchase Register Columns</h4>
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmMapping()">Confirm & Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let gstrData = null;
+        let booksData = null;
+        let gstrColumns = [];
+        let booksColumns = [];
+        let reconciliationResults = [];
+        let columnMappings = {
+            gstr: {},
+            books: {}
+        };
+
+        // Required fields
+        const requiredFields = [
+            { key: 'gstin', label: 'Supplier GSTIN', aliases: ['gstin', 'supplier_gstin', 'gstn', 'gst_no', 'gst no', 'supplier gstin', 'ctin', 'gstin of supplier', 'gstin/uin of supplier'] },
+            { key: 'invoice_no', label: 'Invoice Number', aliases: ['invoice_no', 'inv_no', 'invoice', 'inv no', 'invoice number', 'bill no', 'bill_no', 'document number', 'doc no', 'invoice/advance receipt number'] },
+            { key: 'invoice_date', label: 'Invoice Date', aliases: ['invoice_date', 'inv_date', 'date', 'inv date', 'bill date', 'bill_date', 'document date', 'invoice/advance receipt date'] },
+            { key: 'taxable_value', label: 'Taxable Value', aliases: ['taxable_value', 'taxable value', 'taxable amt', 'taxable_amt', 'base amount', 'assessable value', 'taxable amount', 'taxable val'] },
+            { key: 'igst', label: 'IGST', aliases: ['igst', 'igst amt', 'igst_amt', 'integrated tax', 'igst amount'] },
+            { key: 'cgst', label: 'CGST', aliases: ['cgst', 'cgst amt', 'cgst_amt', 'central tax', 'cgst amount'] },
+            { key: 'sgst', label: 'SGST/UTGST', aliases: ['sgst', 'sgst amt', 'sgst_amt', 'state tax', 'utgst', 'sgst/utgst', 'sgst amount', 'state/ut tax'] },
+            { key: 'cess', label: 'Cess', aliases: ['cess', 'cess amt', 'cess_amt', 'cess amount'] },
+            { key: 'supplier_name', label: 'Supplier Name', aliases: ['supplier_name', 'party name', 'vendor name', 'supplier', 'vendor', 'trade/legal name'] }
+        ];
+
+        // File Upload Handler
+        function handleFileUpload(type, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const zone = document.getElementById(`${type}-zone`);
+            const fileInfo = document.getElementById(`${type}-file-info`);
+
+            zone.classList.add('uploaded');
+            fileInfo.textContent = `✅ ${file.name} (${formatFileSize(file.size)})`;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    
+                    if (jsonData.length === 0) {
+                        alert('The uploaded file is empty or has no data rows.');
+                        return;
+                    }
+
+                    const columns = Object.keys(jsonData[0]);
+                    
+                    if (type === 'gstr') {
+                        gstrData = jsonData;
+                        gstrColumns = columns;
+                        autoMapColumns('gstr', columns);
+                    } else {
+                        booksData = jsonData;
+                        booksColumns = columns;
+                        autoMapColumns('books', columns);
+                    }
+
+                    checkReadyState();
+                } catch (error) {
+                    console.error('Error parsing file:', error);
+                    alert('Error parsing file. Please ensure it is a valid Excel/CSV file.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Auto-map columns based on aliases
+        function autoMapColumns(type, columns) {
+            const mappings = {};
+            const lowerColumns = columns.map(c => c.toLowerCase().trim());
+
+            requiredFields.forEach(field => {
+                const matchIndex = lowerColumns.findIndex(col => 
+                    field.aliases.some(alias => col === alias || col.includes(alias))
+                );
+                if (matchIndex !== -1) {
+                    mappings[field.key] = columns[matchIndex];
+                }
+            });
+
+            columnMappings[type] = mappings;
+        }
+
+        // Check if ready to reconcile
+        function checkReadyState() {
+            const isReady = gstrData && booksData;
+            document.getElementById('reconcileBtn').disabled = !isReady;
+            
+            if (isReady) {
+                showMappingModal();
+            }
+        }
+
+        // Show column mapping modal
+        function showMappingModal() {
+            const modal = document.getElementById('mapping-modal');
+            const gstrSection = document.getElementById('gstr-mapping');
+            const booksSection = document.getElementById('books-mapping');
+
+            gstrSection.innerHTML = '<h4>GSTR-2A/2B Columns</h4>' + 
+                generateMappingFields('gstr', gstrColumns);
+            booksSection.innerHTML = '<h4>Purchase Register Columns</h4>' + 
+                generateMappingFields('books', booksColumns);
+
+            modal.classList.add('active');
+        }
+
+        function generateMappingFields(type, columns) {
+            let html = '';
+            requiredFields.forEach(field => {
+                const currentMapping = columnMappings[type][field.key] || '';
+                html += `
+                    <div class="mapping-row">
+                        <label>${field.label}${field.key !== 'cess' && field.key !== 'supplier_name' ? ' *' : ''}</label>
+                        <select id="map-${type}-${field.key}" onchange="updateMapping('${type}', '${field.key}', this.value)">
+                            <option value="">-- Select Column --</option>
+                            ${columns.map(col => `
+                                <option value="${col}" ${currentMapping === col ? 'selected' : ''}>${col}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function updateMapping(type, field, value) {
+            columnMappings[type][field] = value;
+        }
+
+        function closeModal() {
+            document.getElementById('mapping-modal').classList.remove('active');
+        }
+
+        function confirmMapping() {
+            // Validate required mappings
+            const required = ['gstin', 'invoice_no', 'taxable_value'];
+            
+            for (const field of required) {
+                if (!columnMappings.gstr[field]) {
+                    alert(`Please map the "${requiredFields.find(f => f.key === field).label}" field for GSTR data.`);
+                    return;
+                }
+                if (!columnMappings.books[field]) {
+                    alert(`Please map the "${requiredFields.find(f => f.key === field).label}" field for Purchase Register data.`);
+                    return;
+                }
+            }
+
+            closeModal();
+        }
+
+        // Run Reconciliation
+        function runReconciliation() {
+            if (!gstrData || !booksData) {
+                alert('Please upload both files first.');
+                return;
+            }
+
+            const amountTolerance = parseFloat(document.getElementById('amountTolerance').value) || 1;
+            const taxTolerance = parseFloat(document.getElementById('taxTolerance').value) || 1;
+            const matchBy = document.getElementById('matchBy').value;
+
+            // Normalize data
+            const normalizedGSTR = normalizeData(gstrData, 'gstr');
+            const normalizedBooks = normalizeData(booksData, 'books');
+
+            // Create lookup maps
+            const gstrMap = new Map();
+            const booksMap = new Map();
+
+            normalizedGSTR.forEach(record => {
+                const key = generateMatchKey(record, matchBy);
+                if (!gstrMap.has(key)) gstrMap.set(key, []);
+                gstrMap.get(key).push(record);
+            });
+
+            normalizedBooks.forEach(record => {
+                const key = generateMatchKey(record, matchBy);
+                if (!booksMap.has(key)) booksMap.set(key, []);
+                booksMap.get(key).push(record);
+            });
+
+            reconciliationResults = [];
+            const processedGSTR = new Set();
+            const processedBooks = new Set();
+
+            // Match records
+            booksMap.forEach((booksRecords, key) => {
+                const gstrRecords = gstrMap.get(key) || [];
+
+                booksRecords.forEach((bookRecord, bIndex) => {
+                    const bookId = `${key}-book-${bIndex}`;
+                    if (processedBooks.has(bookId)) return;
+
+                    let matched = false;
+                    for (let gIndex = 0; gIndex < gstrRecords.length; gIndex++) {
+                        const gstrRecord = gstrRecords[gIndex];
+                        const gstrId = `${key}-gstr-${gIndex}`;
+                        
+                        if (processedGSTR.has(gstrId)) continue;
+
+                        const taxableDiff = Math.abs((bookRecord.taxable_value || 0) - (gstrRecord.taxable_value || 0));
+                        const igstDiff = Math.abs((bookRecord.igst || 0) - (gstrRecord.igst || 0));
+                        const cgstDiff = Math.abs((bookRecord.cgst || 0) - (gstrRecord.cgst || 0));
+                        const sgstDiff = Math.abs((bookRecord.sgst || 0) - (gstrRecord.sgst || 0));
+
+                        const isAmountMatch = taxableDiff <= amountTolerance;
+                        const isTaxMatch = igstDiff <= taxTolerance && cgstDiff <= taxTolerance && sgstDiff <= taxTolerance;
+
+                        if (isAmountMatch && isTaxMatch) {
+                            // Perfect match
+                            reconciliationResults.push({
+                                status: 'matched',
+                                gstin: bookRecord.gstin,
+                                supplier_name: bookRecord.supplier_name || gstrRecord.supplier_name,
+                                invoice_no: bookRecord.invoice_no,
+                                invoice_date: bookRecord.invoice_date,
+                                books_taxable: bookRecord.taxable_value,
+                                gstr_taxable: gstrRecord.taxable_value,
+                                taxable_diff: bookRecord.taxable_value - gstrRecord.taxable_value,
+                                books_igst: bookRecord.igst,
+                                gstr_igst: gstrRecord.igst,
+                                igst_diff: bookRecord.igst - gstrRecord.igst,
+                                books_cgst: bookRecord.cgst,
+                                gstr_cgst: gstrRecord.cgst,
+                                cgst_diff: bookRecord.cgst - gstrRecord.cgst,
+                                books_sgst: bookRecord.sgst,
+                                gstr_sgst: gstrRecord.sgst,
+                                sgst_diff: bookRecord.sgst - gstrRecord.sgst,
+                                total_tax_diff: (bookRecord.igst - gstrRecord.igst) + (bookRecord.cgst - gstrRecord.cgst) + (bookRecord.sgst - gstrRecord.sgst)
+                            });
+                            processedGSTR.add(gstrId);
+                            processedBooks.add(bookId);
+                            matched = true;
+                            break;
+                        } else if (isAmountMatch || (matchBy === 'gstin-invoice')) {
+                            // Amount/Tax mismatch
+                            reconciliationResults.push({
+                                status: 'mismatch',
+                                gstin: bookRecord.gstin,
+                                supplier_name: bookRecord.supplier_name || gstrRecord.supplier_name,
+                                invoice_no: bookRecord.invoice_no,
+                                invoice_date: bookRecord.invoice_date,
+                                books_taxable: bookRecord.taxable_value,
+                                gstr_taxable: gstrRecord.taxable_value,
+                                taxable_diff: bookRecord.taxable_value - gstrRecord.taxable_value,
+                                books_igst: bookRecord.igst,
+                                gstr_igst: gstrRecord.igst,
+                                igst_diff: bookRecord.igst - gstrRecord.igst,
+                                books_cgst: bookRecord.cgst,
+                                gstr_cgst: gstrRecord.cgst,
+                                cgst_diff: bookRecord.cgst - gstrRecord.cgst,
+                                books_sgst: bookRecord.sgst,
+                                gstr_sgst: gstrRecord.sgst,
+                                sgst_diff: bookRecord.sgst - gstrRecord.sgst,
+                                total_tax_diff: (bookRecord.igst - gstrRecord.igst) + (bookRecord.cgst - gstrRecord.cgst) + (bookRecord.sgst - gstrRecord.sgst)
+                            });
+                            processedGSTR.add(gstrId);
+                            processedBooks.add(bookId);
+                            matched = true;
+                            break;
+                        }
+                    }
+
+                    if (!matched) {
+                        // Missing in GSTR
+                        reconciliationResults.push({
+                            status: 'missing-gstr',
+                            gstin: bookRecord.gstin,
+                            supplier_name: bookRecord.supplier_name,
+                            invoice_no: bookRecord.invoice_no,
+                            invoice_date: bookRecord.invoice_date,
+                            books_taxable: bookRecord.taxable_value,
+                            gstr_taxable: 0,
+                            taxable_diff: bookRecord.taxable_value,
+                            books_igst: bookRecord.igst,
+                            gstr_igst: 0,
+                            igst_diff: bookRecord.igst,
+                            books_cgst: bookRecord.cgst,
+                            gstr_cgst: 0,
+                            cgst_diff: bookRecord.cgst,
+                            books_sgst: bookRecord.sgst,
+                            gstr_sgst: 0,
+                            sgst_diff: bookRecord.sgst,
+                            total_tax_diff: bookRecord.igst + bookRecord.cgst + bookRecord.sgst
+                        });
+                        processedBooks.add(bookId);
+                    }
+                });
+            });
+
+            // Find records in GSTR but not in Books
+            gstrMap.forEach((gstrRecords, key) => {
+                gstrRecords.forEach((gstrRecord, gIndex) => {
+                    const gstrId = `${key}-gstr-${gIndex}`;
+                    if (!processedGSTR.has(gstrId)) {
+                        reconciliationResults.push({
+                            status: 'missing-books',
+                            gstin: gstrRecord.gstin,
+                            supplier_name: gstrRecord.supplier_name,
+                            invoice_no: gstrRecord.invoice_no,
+                            invoice_date: gstrRecord.invoice_date,
+                            books_taxable: 0,
+                            gstr_taxable: gstrRecord.taxable_value,
+                            taxable_diff: -gstrRecord.taxable_value,
+                            books_igst: 0,
+                            gstr_igst: gstrRecord.igst,
+                            igst_diff: -gstrRecord.igst,
+                            books_cgst: 0,
+                            gstr_cgst: gstrRecord.cgst,
+                            cgst_diff: -gstrRecord.cgst,
+                            books_sgst: 0,
+                            gstr_sgst: gstrRecord.sgst,
+                            sgst_diff: -gstrRecord.sgst,
+                            total_tax_diff: -(gstrRecord.igst + gstrRecord.cgst + gstrRecord.sgst)
+                        });
+                    }
+                });
+            });
+
+            // Update UI
+            updateStats();
+            renderResultsTable();
+            updateITCAnalysis();
+            renderVendorAnalysis();
+            renderMonthAnalysis();
+            switchTab('results');
+        }
+
+        // Normalize data based on column mappings
+        function normalizeData(data, type) {
+            const mapping = columnMappings[type];
+            return data.map(row => ({
+                gstin: cleanGSTIN(getField(row, mapping.gstin)),
+                supplier_name: getField(row, mapping.supplier_name) || '',
+                invoice_no: cleanInvoiceNo(getField(row, mapping.invoice_no)),
+                invoice_date: parseDate(getField(row, mapping.invoice_date)),
+                taxable_value: parseAmount(getField(row, mapping.taxable_value)),
+                igst: parseAmount(getField(row, mapping.igst)),
+                cgst: parseAmount(getField(row, mapping.cgst)),
+                sgst: parseAmount(getField(row, mapping.sgst)),
+                cess: parseAmount(getField(row, mapping.cess))
+            }));
+        }
+
+        function getField(row, fieldName) {
+            if (!fieldName) return '';
+            return row[fieldName] !== undefined ? row[fieldName] : '';
+        }
+
+        function cleanGSTIN(value) {
+            if (!value) return '';
+            return String(value).toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 15);
+        }
+
+        function cleanInvoiceNo(value) {
+            if (!value) return '';
+            return String(value).toUpperCase().replace(/[\s-/]/g, '');
+        }
+
+        function parseAmount(value) {
+            if (!value && value !== 0) return 0;
+            const num = parseFloat(String(value).replace(/[₹,\s]/g, ''));
+            return isNaN(num) ? 0 : Math.round(num * 100) / 100;
+        }
+
+        function parseDate(value) {
+            if (!value) return '';
+            if (value instanceof Date) {
+                return formatDate(value);
+            }
+            // Try parsing various date formats
+            const dateStr = String(value);
+            const parsed = new Date(dateStr);
+            if (!isNaN(parsed)) {
+                return formatDate(parsed);
+            }
+            // Try DD/MM/YYYY format
+            const parts = dateStr.split(/[/-]/);
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+                } else {
+                    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+                }
+            }
+            return dateStr;
+        }
+
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function generateMatchKey(record, matchBy) {
+            switch (matchBy) {
+                case 'invoice':
+                    return record.invoice_no;
+                case 'gstin-invoice':
+                    return `${record.gstin}-${record.invoice_no}`;
+                case 'gstin-amount':
+                    return `${record.gstin}-${record.taxable_value}`;
+                default:
+                    return record.invoice_no;
+            }
+        }
+
+        // Update Statistics
+        function updateStats() {
+            const stats = {
+                total: reconciliationResults.length,
+                matched: 0,
+                mismatch: 0,
+                missingGstr: 0,
+                missingBooks: 0,
+                matchedAmt: 0,
+                mismatchAmt: 0,
+                missingGstrAmt: 0,
+                missingBooksAmt: 0,
+                totalAmt: 0
+            };
+
+            reconciliationResults.forEach(r => {
+                const booksTax = r.books_igst + r.books_cgst + r.books_sgst;
+                const gstrTax = r.gstr_igst + r.gstr_cgst + r.gstr_sgst;
+                
+                switch (r.status) {
+                    case 'matched':
+                        stats.matched++;
+                        stats.matchedAmt += booksTax;
+                        break;
+                    case 'mismatch':
+                        stats.mismatch++;
+                        stats.mismatchAmt += Math.abs(r.total_tax_diff);
+                        break;
+                    case 'missing-gstr':
+                        stats.missingGstr++;
+                        stats.missingGstrAmt += booksTax;
+                        break;
+                    case 'missing-books':
+                        stats.missingBooks++;
+                        stats.missingBooksAmt += gstrTax;
+                        break;
+                }
+                stats.totalAmt += Math.max(booksTax, gstrTax);
+            });
+
+            document.getElementById('stat-total').textContent = stats.total;
+            document.getElementById('stat-total-amt').textContent = formatCurrency(stats.totalAmt);
+            document.getElementById('stat-matched').textContent = stats.matched;
+            document.getElementById('stat-matched-amt').textContent = formatCurrency(stats.matchedAmt);
+            document.getElementById('stat-mismatch').textContent = stats.mismatch;
+            document.getElementById('stat-mismatch-amt').textContent = formatCurrency(stats.mismatchAmt);
+            document.getElementById('stat-missing-gstr').textContent = stats.missingGstr;
+            document.getElementById('stat-missing-gstr-amt').textContent = formatCurrency(stats.missingGstrAmt);
+            document.getElementById('stat-missing-books').textContent = stats.missingBooks;
+            document.getElementById('stat-missing-books-amt').textContent = formatCurrency(stats.missingBooksAmt);
+        }
+
+        // Render Results Table
+        function renderResultsTable() {
+            const container = document.getElementById('results-table-container');
+            
+            if (reconciliationResults.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-title">No Reconciliation Data</div>
+                        <p>Upload both files and run reconciliation to see results</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const filteredResults = applyFilters(true);
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>GSTIN</th>
+                            <th>Supplier</th>
+                            <th>Invoice No</th>
+                            <th>Date</th>
+                            <th>Books Tax</th>
+                            <th>GSTR Tax</th>
+                            <th>Variance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredResults.map(r => `
+                            <tr>
+                                <td><span class="badge badge-${r.status}">${formatStatus(r.status)}</span></td>
+                                <td class="mono">${r.gstin}</td>
+                                <td>${truncate(r.supplier_name, 25)}</td>
+                                <td class="mono">${r.invoice_no}</td>
+                                <td class="mono">${r.invoice_date}</td>
+                                <td class="mono">${formatCurrency(r.books_igst + r.books_cgst + r.books_sgst)}</td>
+                                <td class="mono">${formatCurrency(r.gstr_igst + r.gstr_cgst + r.gstr_sgst)}</td>
+                                <td class="mono ${r.total_tax_diff > 0 ? 'diff-negative' : r.total_tax_diff < 0 ? 'diff-positive' : ''}">${formatCurrency(r.total_tax_diff)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Apply Filters
+        function applyFilters(returnData = false) {
+            const status = document.getElementById('filter-status').value;
+            const gstin = document.getElementById('filter-gstin').value.toUpperCase();
+            const invoice = document.getElementById('filter-invoice').value.toUpperCase();
+
+            let filtered = reconciliationResults;
+
+            if (status !== 'all') {
+                filtered = filtered.filter(r => r.status === status);
+            }
+            if (gstin) {
+                filtered = filtered.filter(r => r.gstin.includes(gstin));
+            }
+            if (invoice) {
+                filtered = filtered.filter(r => r.invoice_no.includes(invoice));
+            }
+
+            if (returnData) return filtered;
+            renderResultsTable();
+        }
+
+        // Update ITC Analysis
+        function updateITCAnalysis() {
+            let itcRisk = { igst: 0, cgst: 0, sgst: 0, total: 0 };
+            let itcExcess = { igst: 0, cgst: 0, sgst: 0, total: 0 };
+
+            reconciliationResults.forEach(r => {
+                if (r.status === 'missing-gstr') {
+                    // ITC at risk - claimed in books but not in GSTR
+                    itcRisk.igst += r.books_igst;
+                    itcRisk.cgst += r.books_cgst;
+                    itcRisk.sgst += r.books_sgst;
+                } else if (r.status === 'missing-books') {
+                    // Excess in GSTR - available but not claimed
+                    itcExcess.igst += r.gstr_igst;
+                    itcExcess.cgst += r.gstr_cgst;
+                    itcExcess.sgst += r.gstr_sgst;
+                } else if (r.status === 'mismatch') {
+                    // Handle mismatches
+                    if (r.igst_diff > 0) itcRisk.igst += r.igst_diff;
+                    else itcExcess.igst += Math.abs(r.igst_diff);
+                    
+                    if (r.cgst_diff > 0) itcRisk.cgst += r.cgst_diff;
+                    else itcExcess.cgst += Math.abs(r.cgst_diff);
+                    
+                    if (r.sgst_diff > 0) itcRisk.sgst += r.sgst_diff;
+                    else itcExcess.sgst += Math.abs(r.sgst_diff);
+                }
+            });
+
+            itcRisk.total = itcRisk.igst + itcRisk.cgst + itcRisk.sgst;
+            itcExcess.total = itcExcess.igst + itcExcess.cgst + itcExcess.sgst;
+            const netVariance = itcRisk.total - itcExcess.total;
+
+            document.getElementById('itc-igst').textContent = formatCurrency(itcRisk.igst);
+            document.getElementById('itc-cgst').textContent = formatCurrency(itcRisk.cgst);
+            document.getElementById('itc-sgst').textContent = formatCurrency(itcRisk.sgst);
+            document.getElementById('itc-total').textContent = formatCurrency(itcRisk.total);
+            document.getElementById('itc-excess').textContent = formatCurrency(itcExcess.total);
+            
+            const netEl = document.getElementById('itc-net');
+            netEl.textContent = formatCurrency(netVariance);
+            netEl.className = 'itc-item-value' + (netVariance < 0 ? ' positive' : '');
+        }
+
+        // Render Vendor Analysis
+        function renderVendorAnalysis() {
+            const container = document.getElementById('vendor-table-container');
+            const vendorData = {};
+
+            reconciliationResults.forEach(r => {
+                if (!vendorData[r.gstin]) {
+                    vendorData[r.gstin] = {
+                        gstin: r.gstin,
+                        name: r.supplier_name,
+                        invoices: 0,
+                        matched: 0,
+                        mismatched: 0,
+                        missingGstr: 0,
+                        missingBooks: 0,
+                        booksITC: 0,
+                        gstrITC: 0,
+                        variance: 0
+                    };
+                }
+                
+                const v = vendorData[r.gstin];
+                v.invoices++;
+                if (r.status === 'matched') v.matched++;
+                else if (r.status === 'mismatch') v.mismatched++;
+                else if (r.status === 'missing-gstr') v.missingGstr++;
+                else if (r.status === 'missing-books') v.missingBooks++;
+                
+                v.booksITC += r.books_igst + r.books_cgst + r.books_sgst;
+                v.gstrITC += r.gstr_igst + r.gstr_cgst + r.gstr_sgst;
+                v.variance += r.total_tax_diff;
+            });
+
+            const vendors = Object.values(vendorData).sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance));
+
+            if (vendors.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏢</div>
+                        <div class="empty-state-title">No Vendor Data</div>
+                        <p>Run reconciliation to see vendor-wise analysis</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>GSTIN</th>
+                            <th>Supplier Name</th>
+                            <th>Invoices</th>
+                            <th>Matched</th>
+                            <th>Issues</th>
+                            <th>Books ITC</th>
+                            <th>GSTR ITC</th>
+                            <th>Variance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${vendors.slice(0, 50).map(v => `
+                            <tr>
+                                <td class="mono">${v.gstin}</td>
+                                <td>${truncate(v.name, 30)}</td>
+                                <td class="mono">${v.invoices}</td>
+                                <td class="mono" style="color: var(--success)">${v.matched}</td>
+                                <td class="mono" style="color: var(--danger)">${v.mismatched + v.missingGstr + v.missingBooks}</td>
+                                <td class="mono">${formatCurrency(v.booksITC)}</td>
+                                <td class="mono">${formatCurrency(v.gstrITC)}</td>
+                                <td class="mono ${v.variance > 0 ? 'diff-negative' : v.variance < 0 ? 'diff-positive' : ''}">${formatCurrency(v.variance)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Render Month Analysis
+        function renderMonthAnalysis() {
+            const container = document.getElementById('month-table-container');
+            const monthData = {};
+
+            reconciliationResults.forEach(r => {
+                let monthKey = 'Unknown';
+                if (r.invoice_date) {
+                    const parts = r.invoice_date.split('/');
+                    if (parts.length >= 2) {
+                        monthKey = `${parts[1]}/${parts[2]}`;
+                    }
+                }
+
+                if (!monthData[monthKey]) {
+                    monthData[monthKey] = {
+                        month: monthKey,
+                        invoices: 0,
+                        matched: 0,
+                        issues: 0,
+                        booksITC: 0,
+                        gstrITC: 0,
+                        variance: 0
+                    };
+                }
+
+                const m = monthData[monthKey];
+                m.invoices++;
+                if (r.status === 'matched') m.matched++;
+                else m.issues++;
+                m.booksITC += r.books_igst + r.books_cgst + r.books_sgst;
+                m.gstrITC += r.gstr_igst + r.gstr_cgst + r.gstr_sgst;
+                m.variance += r.total_tax_diff;
+            });
+
+            const months = Object.values(monthData).sort((a, b) => {
+                const [am, ay] = a.month.split('/');
+                const [bm, by] = b.month.split('/');
+                return (by - ay) || (bm - am);
+            });
+
+            if (months.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <div class="empty-state-title">No Monthly Data</div>
+                        <p>Run reconciliation to see month-wise analysis</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Invoices</th>
+                            <th>Matched</th>
+                            <th>Issues</th>
+                            <th>Books ITC</th>
+                            <th>GSTR ITC</th>
+                            <th>Variance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${months.map(m => `
+                            <tr>
+                                <td class="mono">${m.month}</td>
+                                <td class="mono">${m.invoices}</td>
+                                <td class="mono" style="color: var(--success)">${m.matched}</td>
+                                <td class="mono" style="color: var(--danger)">${m.issues}</td>
+                                <td class="mono">${formatCurrency(m.booksITC)}</td>
+                                <td class="mono">${formatCurrency(m.gstrITC)}</td>
+                                <td class="mono ${m.variance > 0 ? 'diff-negative' : m.variance < 0 ? 'diff-positive' : ''}">${formatCurrency(m.variance)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Download Excel
+        function downloadExcel(type) {
+            if (reconciliationResults.length === 0) {
+                alert('No data to download. Please run reconciliation first.');
+                return;
+            }
+
+            let data = reconciliationResults;
+            let filename = 'GST_Reconciliation_Full.xlsx';
+
+            if (type === 'mismatches') {
+                data = reconciliationResults.filter(r => r.status !== 'matched');
+                filename = 'GST_Reconciliation_Mismatches.xlsx';
+            }
+
+            const exportData = data.map(r => ({
+                'Status': formatStatus(r.status),
+                'GSTIN': r.gstin,
+                'Supplier Name': r.supplier_name,
+                'Invoice No': r.invoice_no,
+                'Invoice Date': r.invoice_date,
+                'Books Taxable Value': r.books_taxable,
+                'GSTR Taxable Value': r.gstr_taxable,
+                'Taxable Variance': r.taxable_diff,
+                'Books IGST': r.books_igst,
+                'GSTR IGST': r.gstr_igst,
+                'IGST Variance': r.igst_diff,
+                'Books CGST': r.books_cgst,
+                'GSTR CGST': r.gstr_cgst,
+                'CGST Variance': r.cgst_diff,
+                'Books SGST': r.books_sgst,
+                'GSTR SGST': r.gstr_sgst,
+                'SGST Variance': r.sgst_diff,
+                'Total Tax Variance': r.total_tax_diff
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Reconciliation');
+            XLSX.writeFile(wb, filename);
+        }
+
+        // Download Vendor Analysis
+        function downloadVendorAnalysis() {
+            const vendorData = {};
+            reconciliationResults.forEach(r => {
+                if (!vendorData[r.gstin]) {
+                    vendorData[r.gstin] = {
+                        'GSTIN': r.gstin,
+                        'Supplier Name': r.supplier_name,
+                        'Total Invoices': 0,
+                        'Matched': 0,
+                        'Mismatched': 0,
+                        'Missing in GSTR': 0,
+                        'Missing in Books': 0,
+                        'Books ITC (₹)': 0,
+                        'GSTR ITC (₹)': 0,
+                        'ITC Variance (₹)': 0
+                    };
+                }
+                const v = vendorData[r.gstin];
+                v['Total Invoices']++;
+                if (r.status === 'matched') v['Matched']++;
+                else if (r.status === 'mismatch') v['Mismatched']++;
+                else if (r.status === 'missing-gstr') v['Missing in GSTR']++;
+                else if (r.status === 'missing-books') v['Missing in Books']++;
+                v['Books ITC (₹)'] += r.books_igst + r.books_cgst + r.books_sgst;
+                v['GSTR ITC (₹)'] += r.gstr_igst + r.gstr_cgst + r.gstr_sgst;
+                v['ITC Variance (₹)'] += r.total_tax_diff;
+            });
+
+            const vendors = Object.values(vendorData);
+            const ws = XLSX.utils.json_to_sheet(vendors);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Vendor Analysis');
+            XLSX.writeFile(wb, 'Vendor_ITC_Analysis.xlsx');
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        // Reset All
+        function resetAll() {
+            gstrData = null;
+            booksData = null;
+            gstrColumns = [];
+            booksColumns = [];
+            reconciliationResults = [];
+            columnMappings = { gstr: {}, books: {} };
+
+            document.getElementById('gstr-file').value = '';
+            document.getElementById('books-file').value = '';
+            document.getElementById('gstr-zone').classList.remove('uploaded');
+            document.getElementById('books-zone').classList.remove('uploaded');
+            document.getElementById('gstr-file-info').textContent = '';
+            document.getElementById('books-file-info').textContent = '';
+            document.getElementById('reconcileBtn').disabled = true;
+
+            // Reset stats
+            ['total', 'matched', 'mismatch', 'missing-gstr', 'missing-books'].forEach(s => {
+                document.getElementById(`stat-${s}`).textContent = '0';
+                document.getElementById(`stat-${s}-amt`).textContent = '₹0.00';
+            });
+
+            // Reset ITC
+            ['igst', 'cgst', 'sgst', 'total', 'excess', 'net'].forEach(s => {
+                document.getElementById(`itc-${s}`).textContent = '₹0.00';
+            });
+
+            // Reset tables
+            document.getElementById('results-table-container').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <div class="empty-state-title">No Reconciliation Data</div>
+                    <p>Upload both files and run reconciliation to see results</p>
+                </div>
+            `;
+
+            switchTab('upload');
+        }
+
+        // Utility Functions
+        function formatCurrency(amount) {
+            if (!amount && amount !== 0) return '₹0.00';
+            const prefix = amount < 0 ? '-' : '';
+            return prefix + '₹' + Math.abs(amount).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function formatStatus(status) {
+            switch (status) {
+                case 'matched': return 'Matched';
+                case 'mismatch': return 'Mismatch';
+                case 'missing-gstr': return 'Missing GSTR';
+                case 'missing-books': return 'Missing Books';
+                default: return status;
+            }
+        }
+
+        function truncate(str, len) {
+            if (!str) return '';
+            return str.length > len ? str.substring(0, len) + '...' : str;
+        }
+
+        // Drag and Drop
+        ['gstr-zone', 'books-zone'].forEach(zoneId => {
+            const zone = document.getElementById(zoneId);
+            
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    const input = zone.querySelector('input[type="file"]');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    input.files = dataTransfer.files;
+                    handleFileUpload(zoneId.replace('-zone', ''), input);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
